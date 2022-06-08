@@ -9,6 +9,19 @@ import {
 
 import { DataListProps } from ".";
 
+interface ImageEmptyProps {
+    source: string;
+}
+export const ImageContainer = styled.View`
+    align-items: center;
+    justify-content: center;
+`;
+
+export const ImageEmpty = styled.Image<ImageEmptyProps>`
+    width: 300px;
+    height: 200px;
+`;
+
 export const Container = styled.View`
     flex: 1;
 
@@ -96,3 +109,13 @@ export const TransactionList = styled(
     showsVerticalScrollIndicator: false,
     contentContainerStyle: { paddingBottom: getBottomSpace() },
 })``;
+
+export const LoadContainer = styled.View`
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+`;
+
+export const SubHeader = styled.View``;
+
+export const Loading = styled.View``;

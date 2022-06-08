@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 import { Modal, TouchableWithoutFeedback, Keyboard, Alert } from "react-native";
 
@@ -15,6 +15,8 @@ import { TransactionTypeButton } from "../../components/Forms/TransactionTypeBut
 import { CategorySelectButton } from "../../components/Forms/CategorySelectButton";
 
 import { CategorySelect } from "../CategorySelect";
+
+import { useNavigation } from "@react-navigation/native";
 
 import uuid from "react-native-uuid";
 
@@ -36,22 +38,31 @@ interface FormData {
 }
 
 const schema = Yup.object().shape({
-    name: Yup.string().required("Nome obrigatório"),
+    name: Yup.string().required("Nome é obrigatório"),
     amount: Yup.number()
-        .typeError("Informe um valor númerico")
-        .positive("O valor não pode ser negativo"),
+        .typeError("Informe um valor numérico")
+        .positive("O Valor não pode ser negativo")
+        .required("O valor obrigatório"),
 });
 
 export function Register() {
-    const dataKey = "@gofinances:transactions";
     const [transactionType, setTransactionType] = useState("");
     const [categoryModalOpen, setCategoryModalOpen] = useState(false);
-
     const [category, setCategory] = useState({
         key: "category",
         name: "Categoria",
+        icon: "list",
     });
 
+    const navigation = useNavigation();
+
+    const schema = Yup.object().shape({
+        name: Yup.string().required("Nome é obrigatório"),
+        amount: Yup.number()
+            .typeError("Informe um valor numérico")
+            .positive("O Valor não pode ser negativo")
+            .required("O valor obrigatório"),
+    });
     const {
         control,
         handleSubmit,
@@ -61,7 +72,7 @@ export function Register() {
         resolver: yupResolver(schema),
     });
 
-    function handleTransationTypeSelect(type: "up" | "down") {
+    function handleTransationTypeSelect(type: "positive" | "negative") {
         setTransactionType(type);
     }
 
@@ -74,20 +85,24 @@ export function Register() {
 
     async function handleRegister(form: FormData) {
         if (!transactionType)
-            return Alert.alert("Selecione o tipo de transação");
-
+            return Alert.alert(
+                "Seleção obrigatória",
+                "Selecione o tipo da transação"
+            );
         if (category.key === "category")
-            return Alert.alert("Selecione a categoria");
+            return Alert.alert("Seleção obrigatória", "Selecione a categoria");
 
         const newTransaction = {
             id: String(uuid.v4()),
             name: form.name,
             amount: form.amount,
-            transactionType,
+            type: transactionType,
             category: category.key,
             date: new Date(),
         };
         try {
+            const dataKey = "@gofinances:transactions";
+
             const data = await AsyncStorage.getItem(dataKey);
 
             const currentData = data ? JSON.parse(data) : [];
@@ -101,20 +116,15 @@ export function Register() {
             setCategory({
                 key: "category",
                 name: "Categoria",
+                icon: "list",
             });
+
+            navigation.navigate("Listagem");
         } catch (error) {
             console.log(error);
-            Alert.alert("Não foi possivel salvar");
+            Alert.alert("Falha!", "Não foi possível registrar as informações");
         }
     }
-
-    useEffect(() => {
-        async function loadData() {
-            const data = await AsyncStorage.getItem(dataKey);
-            console.log(JSON.parse(data!));
-        }
-        loadData();
-    }, []);
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -122,6 +132,7 @@ export function Register() {
                 <Header>
                     <Title>Cadastro</Title>
                 </Header>
+
                 <Form>
                     <Fields>
                         <InputForm
@@ -145,16 +156,18 @@ export function Register() {
                             <TransactionTypeButton
                                 type="up"
                                 title="Income"
-                                onPress={() => handleTransationTypeSelect("up")}
-                                isActive={transactionType === "up"}
+                                onPress={() =>
+                                    handleTransationTypeSelect("positive")
+                                }
+                                isActive={transactionType === "positive"}
                             />
                             <TransactionTypeButton
                                 type="down"
                                 title="Outcome"
                                 onPress={() =>
-                                    handleTransationTypeSelect("down")
+                                    handleTransationTypeSelect("negative")
                                 }
-                                isActive={transactionType === "down"}
+                                isActive={transactionType === "negative"}
                             />
                         </TransactionsTypes>
 
@@ -166,7 +179,7 @@ export function Register() {
 
                     <Spacement />
                     <Button
-                        title="Enviar"
+                        title={"Enviar"}
                         onPress={handleSubmit(handleRegister)}
                     />
                 </Form>
